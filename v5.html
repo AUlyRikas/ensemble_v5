@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="zh-CN" style="font-size: 80px;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=no,viewport-fit=cover">
+    <title>V5.1 集成投票</title>
+    <meta name="description" content="V5.1四模型集成投票AI预测">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Expires" content="0">
+    <style>
+        *{box-sizing:border-box}html,body{margin:0;padding:0;height:100%;font-size:12px;font-family:system-ui,'PingFang SC',sans-serif;background:#fff;color:#333}#app{max-width:800px;margin:0 auto;min-height:100vh;background:#fff;padding-bottom:20px}
+        .logo-box{text-align:center;padding:18px 0 10px 0}
+        .daohang{display:flex;flex-wrap:wrap;margin:0 8px}.daohang a{flex:1 1 0%;text-decoration:none;text-align:center;cursor:pointer}.daohangdiv{padding:11px 0;font-size:13px;font-weight:bold;color:#fff;white-space:nowrap}
+        .daohang-yellow-line{height:5px;background:#eee122;margin:0 8px}
+        .daohang-spacer{height:13px}
+
+        .lotteryMain{text-align:center;font-size:38px;font-weight:normal;color:#000;padding:14px 0 8px 0;margin:0 12px;letter-spacing:2px}
+        .lotteryMain.black-title{color:#222;font-size:28px}
+        #predictSectionTitle{font-size:28px;font-weight:normal;color:#000;text-align:center;padding:14px 0 8px 0;margin:0 12px;letter-spacing:2px}
+
+        .open_code_zone{display:flex;gap:10px;padding:15px 12px;margin:8px 10px;border-radius:12px;border:1px solid #e0e0e0;align-items:center;background:#fff}
+        .open_code_zone_left{flex:1}.open_code_zone_left-title{text-align:center;margin-bottom:10px}
+        .open_code_zone_left-content{display:flex;flex-wrap:wrap;justify-content:center;gap:5px}
+        .open_code_zone_left-item{display:flex;flex-direction:column;align-items:center;gap:3px}
+        .open_code_zone_left-item-number{width:58px;height:58px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:bold;color:#fff;box-shadow:0 3px 8px rgba(0,0,0,0.3)}
+        .ball-red{background:radial-gradient(circle at 30% 30%,#ef4444,#b91c1c)}.ball-blue{background:radial-gradient(circle at 30% 30%,#3b82f6,#1d4ed8)}.ball-green{background:radial-gradient(circle at 30% 30%,#22c55e,#15803d)}
+        .open_code_zone_left-item-plus{font-size:26px;font-weight:bold;color:#a855f7;padding:0 4px;display:flex;align-items:center;height:46px}
+        .open_code_zone_left-item-zodiac{font-size:16px;color:#000;padding:2px 8px;border-radius:10px;font-weight:600}
+        .open_code_zone_right{flex:0 0 auto;text-align:center;min-width:130px;padding:12px 15px}
+        .mred{color:#d2101e;font:bold 20px Tahoma}
+        .countdown{display:flex;align-items:center;justify-content:center;gap:0;margin-top:5px}.countdown-item{width:30px;height:38px;font-size:22px;font-weight:bold;display:flex;align-items:center;justify-content:center;font-family:'Courier New',monospace;color:#000}.countdown-split{font-size:22px;color:#1a3d96;margin:0 3px;font-weight:bold}
+
+        .predict-card{background:#fff;border:1px solid #e0e0e0;border-radius:12px;padding:18px 15px;margin:10px 12px}
+        .predict-title{text-align:center;font-size:24px;font-weight:normal;color:#FF6600;margin-bottom:6px;letter-spacing:1px}
+        .predict-subtitle{text-align:center;font-size:14px;font-weight:normal;color:#555;margin-bottom:14px}
+        .predict-tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;justify-content:center}
+        .predict-tag{padding:5px 12px;color:#328932;border-radius:15px;font-size:18px;font-weight:normal}
+        .predict-tag.red-tag{color:#d90011;font-size:18px}
+        .predict-tag.green-tag{color:#F81919;font-size:28px;font-weight:normal}
+
+        .find-div{padding:15px 12px;margin:6px 10px}.find-div-title{font-weight:bolder;font-size:16px;margin-left:20px;color:#1a3d96}.find-input{display:flex;align-items:center;gap:10px;margin-top:10px}.expect_value{padding:8px 12px;border:2px solid #1a3d96;border-radius:20px;font-size:14px;width:150px}
+        .hisWrapper{margin:15px 12px;border:1px solid #e0e0e0;border-radius:12px;overflow:hidden}
+        .hisSubject{display:flex;color:#1a3d96;font-weight:bold;font-size:14px;border-bottom:1px solid #e0e0e0;background:#f9fafb}.hisSubject>div{padding:10px 5px;text-align:center}.hisIssue{flex:0 0 18%}.hisTime{flex:0 0 26%}.hisCode{flex:0 0 40%}.hisPlay{flex:0 0 16%}
+        .history-row{display:flex;border-bottom:1px solid #e8ecf4;align-items:center}.history-row>div{padding:8px 4px;text-align:center;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:2px}.history-row .hisIssue-cell{flex:0 0 18%;font-weight:bold;color:#1a3d96;font-size:15px}.history-row .hisTime-cell{flex:0 0 26%;font-size:11px;color:#666}.history-row .hisCode-cell{flex:0 0 40%}.history-row .hisPlay-cell{flex:0 0 16%;color:#1a3d96;font-size:12px;cursor:pointer;font-weight:600}
+        .history-ball{width:34px;height:34px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:15px;font-weight:bold;color:#fff;box-shadow:0 2px 5px rgba(0,0,0,0.3)}.history-plus{font-size:18px;font-weight:bold;color:#a855f7;margin:0 1px}.history-zodiac-tag{font-size:12px;color:#000;padding:2px 5px;border-radius:8px;font-weight:600}
+        .loading-box{text-align:center;padding:30px;color:#1a3d96;font-size:14px}
+        .nav-btn{padding:6px 14px;background:transparent;color:#000;border:none;border-radius:20px;font-size:13px;cursor:pointer;font-weight:bold;transition:all 0.3s}
+        .nav-btn:hover{background:#00a0ea;color:#fff}
+        .nav-btn.active-page{background:#d90011;color:#fff;transform:scale(1.1);box-shadow:0 2px 6px rgba(217,0,17,0.4)}
+        #lock{text-align:center;padding:60px 20px;background:#fff;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center}#lock h2{margin-bottom:20px;color:#1a3d96;font-size:22px}#lock input{padding:12px;font-size:16px;border:2px solid #1a3d96;border-radius:8px;width:200px;text-align:center}#lock button{padding:12px 30px;font-size:16px;background:#d90011;color:#ffd700;border:none;border-radius:30px;cursor:pointer;margin-top:10px;font-weight:bold}
+        footer{text-align:center;padding:18px;color:#999;font-size:11px;border-top:1px solid #e0e0e0;margin-top:24px}
+        .back-to-top{position:fixed;right:20px;bottom:30px;width:44px;height:44px;border:2px solid #1a3d96;border-radius:50%;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:999;box-shadow:0 2px 8px rgba(0,0,0,0.15);transition:all 0.3s;opacity:0;visibility:hidden}.back-to-top.show{opacity:1;visibility:visible}.arrow-up{display:inline-block;width:12px;height:12px;border-left:2px solid #1a3d96;border-top:2px solid #1a3d96;transform:rotate(45deg);margin-top:4px}
+        @media screen and (max-width:480px){.open_code_zone{flex-direction:column}.open_code_zone_right{flex-direction:row;justify-content:space-around;width:100%}.open_code_zone_left-item-number{width:38px;height:38px;font-size:18px}.history-ball{width:26px;height:26px;font-size:11px}.history-zodiac-tag{font-size:8px}.history-plus{font-size:14px}.lotteryMain{font-size:28px}.predict-title{font-size:20px}.predict-subtitle{font-size:15px}.predict-tag.green-tag{font-size:22px}}
+    </style>
+</head>
+<body>
+<div id="lock">
+    <h2>🔒 V5.1 预测系统</h2>
+    <input type="password" id="pwd" placeholder="请输入访问密码">
+    <button onclick="checkPwd()">进入</button>
+    <div class="lock-msg" id="lockMsg"></div>
+</div>
+<div id="app" class="page-width" style="display:none;">
+    <div class="logo-box">
+        <div style="font-size:30px;font-weight:bold;color:#0cdfee;letter-spacing:4px;">V 5 . 1 投 票</div>
+    </div>
+
+    <div class="daohang">
+        <a id="navHome"><div class="daohangdiv" style="background: rgb(217, 0, 17);">首頁</div></a>
+        <a id="navAiPredict"><div class="daohangdiv" style="background: rgb(0, 160, 234);">AI预测</div></a>
+        <a id="navLive"><div class="daohangdiv" style="background: rgb(23, 192, 1);">实时开奖</div></a>
+        <a id="navHistory"><div class="daohangdiv" style="background: rgb(217, 164, 0);">开奖历史</div></a>
+        <a id="navPredict"><div class="daohangdiv" style="background: rgb(105, 44, 197);">预测</div></a>
+    </div>
+    <div class="daohang-yellow-line"></div>
+    <div class="daohang-spacer"></div>
+
+    <div class="lotteryMain">開獎公告</div>
+    <div class="open_code_zone">
+        <div class="open_code_zone_left">
+            <div class="open_code_zone_left-title">
+                <span style="font-size:18px;font-weight:bold;color:#1a3d96;">新澳門六合彩</span>
+                <span style="font-size:15px;color:#333;"> 第 <span class="mred" id="currentExpect">--</span> 期</span>
+            </div>
+            <div class="open_code_zone_left-content" id="liveBallContainer">
+                <div style="color:#999;padding:20px;text-align:center;">等待数据更新...</div>
+            </div>
+        </div>
+        <div class="open_code_zone_right">
+            <div style="font-size:12px;color:#666;">第<span class="mred" id="countdownExpect">--</span></div>
+            <div style="font-size:11px;color:#888;margin:5px 0;">期截止時間</div>
+            <div class="countdown" id="countdownTimer">
+                <div class="countdown-item">0</div><div class="countdown-item">0</div><div class="countdown-split">:</div>
+                <div class="countdown-item">0</div><div class="countdown-item">0</div><div class="countdown-split">:</div>
+                <div class="countdown-item">0</div><div class="countdown-item">0</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="predictSectionTitle">V5.1 · 理性·客观·执行力</div>
+    <div id="predictResultArea">
+        <div class="predict-card"><div class="predict-title">预测数据加载中...</div></div>
+    </div>
+
+    <div class="lotteryMain black-title">历史开奖记录</div>
+    <div class="find-div">
+        <div class="find-div-title">新澳門六合彩開獎公告</div>
+        <div class="find-input">
+            <input class="expect_value" type="text" placeholder="期号" id="searchExpect">
+            <button id="searchExpectBtn" class="nav-btn" style="padding:6px 15px;font-size:12px;background:#d90011;color:#fff;">查询</button>
+        </div>
+    </div>
+    <div class="hisWrapper">
+        <div class="hisSubject"><div class="hisIssue">期號</div><div class="hisTime">開獎時間</div><div class="hisCode">中獎號碼</div><div class="hisPlay">開獎回放</div></div>
+        <div id="historyContent"><div class="loading-box">加载历史中...</div></div>
+    </div>
+    <div class="pagination-container" id="paginationContainer" style="display:none;"></div>
+
+    <div class="back-to-top" id="backToTop" onclick="window.scrollTo({top:0,behavior:'smooth'})"><span class="arrow-up"></span></div>
+    <footer>版權所有 不得轉載 @澳門六合彩 AI预测 · V5.1</footer>
+</div>
+
+<!-- 加载 ensemble_data.js -->
+<script>document.write('<script src="ensemble_data.js?v='+Date.now()+'"><\/script>');</script>
+
+<script>
+function checkPwd(){
+    if(document.getElementById('pwd').value==='5121'){
+        document.getElementById('lock').style.display='none';
+        document.getElementById('app').style.display='block';
+        initAll();
+    }else{
+        document.getElementById('lockMsg').innerText='密码错误';
+        document.getElementById('pwd').value='';
+    }
+}
+document.addEventListener('DOMContentLoaded', function(){
+    document.getElementById('pwd').addEventListener('keypress',function(e){if(e.key==='Enter')checkPwd();});
+    document.getElementById('navHome').addEventListener('click',function(e){e.preventDefault();location.reload();});
+    document.getElementById('navAiPredict').addEventListener('click',function(e){e.preventDefault();refreshAI();document.getElementById('predictResultArea').scrollIntoView({behavior:'smooth'});});
+    document.getElementById('navLive').addEventListener('click',function(e){e.preventDefault();document.getElementById('liveBallContainer').scrollIntoView({behavior:'smooth'});});
+    document.getElementById('navHistory').addEventListener('click',function(e){e.preventDefault();document.getElementById('historyContent').scrollIntoView({behavior:'smooth'});});
+    document.getElementById('navPredict').addEventListener('click',function(e){e.preventDefault();document.getElementById('predictResultArea').scrollIntoView({behavior:'smooth'});});
+    document.getElementById('searchExpectBtn').addEventListener('click',function(){var v=document.getElementById('searchExpect').value.trim();if(v)searchByExpect(v);});
+    document.getElementById('searchExpect').addEventListener('keypress',function(e){if(e.key==='Enter'){var v=e.target.value.trim();if(v)searchByExpect(v);}});
+});
+
+const redSet=new Set([1,2,7,8,12,13,18,19,23,24,29,30,34,35,40,45,46]);
+const blueSet=new Set([3,4,9,10,14,15,20,25,26,31,36,37,41,42,47,48]);
+const greenSet=new Set([5,6,11,16,17,21,22,27,28,32,33,38,39,43,44,49]);
+function getBallClass(num){let n=parseInt(num);if(redSet.has(n))return'ball-red';if(blueSet.has(n))return'ball-blue';return'ball-green';}
+
+function initAll(){loadLive();loadHistory();startCountdown();}
+
+function loadLive(){
+    var p=window.ensembleData;
+    if(!p||!p.code){
+        document.getElementById('predictResultArea').innerHTML='<div class="predict-card"><div class="predict-title">预测数据加载中...</div></div>';
+        return;
+    }
+    
+    document.getElementById('currentExpect').textContent=p.issue;
+    document.getElementById('countdownExpect').textContent=p.issue;
+    
+    var codes=p.code.split(','), zodiacs=(p.zodiac||'').split(','), waves=(p.wave||'').split(',');
+    var html='';
+    for(var i=0;i<codes.length;i++){
+        var n=parseInt(codes[i]), sx=zodiacs[i]||'', wv=waves[i]||'';
+        var cls='';
+        if(wv==='red'||wv==='红')cls='ball-red';
+        else if(wv==='blue'||wv==='蓝')cls='ball-blue';
+        else if(wv==='green'||wv==='绿')cls='ball-green';
+        else cls=getBallClass(n);
+        html+='<div class="open_code_zone_left-item"><div class="open_code_zone_left-item-number '+cls+'">'+codes[i]+'</div><div class="open_code_zone_left-item-zodiac">'+sx+'</div></div>';
+        if(i===5)html+='<div class="open_code_zone_left-item"><div class="open_code_zone_left-item-plus">+</div><div class="open_code_zone_left-item-zodiac">特码</div></div>';
+    }
+    document.getElementById('liveBallContainer').innerHTML=html;
+
+    // 构建预测卡片
+    var killSet = p.killZodiacs || [];
+    var pool3 = (p.pools && p.pools[3]) ? p.pools[3] : (p.three || []);
+    var pool4 = (p.pools && p.pools[4]) ? p.pools[4] : (p.four || []);
+    var pool5 = (p.pools && p.pools[5]) ? p.pools[5] : (p.five || []);
+    var optTails = p.optTails || [];
+    var numbers = p.numbers || [];
+    var dynamicRate9 = p.dynamicRate9 || 0;
+    var dynamicRate6 = p.dynamicRate6 || 0;
+    
+    var predictHtml = '<div class="predict-card">'+
+        '<div class="predict-title">★ V5.1 预测 · '+p.nextIssue+'</div>'+
+        '<div class="predict-subtitle">基于 '+p.issue+' | 开奖 '+p.code+' | 特肖 '+p.teSx+'(尾'+p.teWei+')</div>';
+    
+    // 动态命中率
+    if (dynamicRate9 > 0 || dynamicRate6 > 0) {
+        predictHtml += '<div style="text-align:center;font-size:12px;color:#888;margin-bottom:10px;">'+
+            '动态命中率(近50期): 九肖 ' + dynamicRate9.toFixed(1) + '% | 六肖 ' + dynamicRate6.toFixed(1) + '%'+
+            '</div>';
+    }
+    predictHtml += '<div style="text-align:center;font-size:12px;color:#888;margin-bottom:10px;">'+
+        '基准命中率: 九肖93.18% | 六肖81.82% | 16码60.18%</div>';
+    
+    // 六肖（大字突出）
+    predictHtml += '<div class="predict-tags" style="justify-content:center;margin:10px 0;">'+
+        (p.sixPool||[]).map(function(s){return '<span class="predict-tag green-tag">'+s+'</span>';}).join(' ')+
+        '</div>';
+    
+    // 五肖、四肖、三肖
+    if (pool5.length > 0) {
+        predictHtml += '<div style="text-align:center;font-size:16px;font-weight:normal;color:#FF6600;margin:6px 0;">'+
+            '★五肖: ' + pool5.join(' . ') + '</div>';
+    }
+    if (pool4.length > 0) {
+        predictHtml += '<div style="text-align:center;font-size:16px;font-weight:normal;color:#FF6600;margin:6px 0;">'+
+            '★四肖: ' + pool4.join(' . ') + '</div>';
+    }
+    if (pool3.length > 0) {
+        predictHtml += '<div style="text-align:center;font-size:16px;font-weight:normal;color:#FF6600;margin:6px 0;">'+
+            '★三肖: ' + pool3.join(' . ') + '</div>';
+    }
+    
+    // 16码（按分层排序显示）
+    if (numbers.length > 0) {
+        predictHtml += '<div style="text-align:center;font-size:15px;font-weight:bold;color:#8A2BE2;margin:8px 0;">'+
+            '★16码: ' + numbers.join(' . ') + '</div>';
+    }
+    
+    // 最优7尾
+    if (optTails.length > 0) {
+        predictHtml += '<div style="text-align:center;font-size:14px;font-weight:normal;color:#8A2BE2;margin:4px 0;">'+
+            '★最优7尾: ' + optTails.join(' ') + '</div>';
+    }
+    
+    // 杀肖 + 九肖池
+    predictHtml += '<div class="predict-tags" style="justify-content:center;">'+
+        (killSet.length?'<span class="predict-tag red-tag">杀肖: '+killSet.join('、')+'</span>':'')+
+        ' '+
+        (p.ninePool&&p.ninePool.length?'<span class="predict-tag">九肖: '+p.ninePool.join('、')+'</span>':'')+
+        '</div>';
+    
+    predictHtml += '</div>';
+    document.getElementById('predictResultArea').innerHTML = predictHtml;
+}
+
+
+var fullHistoryList=[],currentPage=1,totalPages=0;
+var PAGE_SIZE=10;
+var HISTORY_API="https://history.macaumarksix.com/history/macaujc2/y/2026";
+
+function buildHistoryBalls(oc,zs){
+    if(!oc)return'<span style="color:#999;">无数据</span>';
+    var codes=oc.split(',').map(function(s){return s.trim();});
+    var zodiacs=zs?zs.split(',').map(function(z){return z.trim();}):[];
+    while(zodiacs.length<codes.length)zodiacs.push('?');
+    var items='';
+    for(var i=0;i<codes.length;i++){
+        items+='<span style="display:inline-flex;flex-direction:column;align-items:center;gap:1px;margin:0 1px;"><span class="history-ball '+getBallClass(codes[i])+'">'+codes[i]+'</span><span class="history-zodiac-tag">'+zodiacs[i]+'</span></span>';
+        if(i===5)items+='<span class="history-plus">+</span>';
+    }
+    return items;
+}
+
+function renderHistory(){
+    if(!fullHistoryList.length){
+        document.getElementById('historyContent').innerHTML='<div class="loading-box">暂无历史数据</div>';
+        document.getElementById('paginationContainer').style.display='none';
+        return;
+    }
+    totalPages=Math.ceil(fullHistoryList.length/PAGE_SIZE);
+    if(currentPage>totalPages)currentPage=totalPages;
+    if(currentPage<1)currentPage=1;
+    var start=(currentPage-1)*PAGE_SIZE,end=Math.min(start+PAGE_SIZE,fullHistoryList.length);
+    var display=fullHistoryList.slice(start,end);
+    var rows='';
+    for(var i=0;i<display.length;i++){
+        var item=display[i];
+        rows+='<div class="history-row"><div class="hisIssue-cell">'+(item.expect||'-')+'</div><div class="hisTime-cell">'+(item.openTime?item.openTime.split(' ')[0]:'-')+'</div><div class="hisCode-cell">'+buildHistoryBalls(item.openCode,item.zodiac)+'</div><div class="hisPlay-cell">查看</div></div>';
+    }
+    document.getElementById('historyContent').innerHTML=rows;
+    renderPagination();
+}
+
+function renderPagination(){
+    var container=document.getElementById('paginationContainer');
+    if(totalPages<=1){container.style.display='none';return;}
+    container.style.display='flex';
+    var html='<button class="nav-btn" id="pagePrev"'+(currentPage===1?' disabled style="opacity:0.5;cursor:not-allowed;"':'')+'>◀</button>';
+    var maxButtons=7,sp,ep;
+    if(totalPages<=maxButtons){sp=1;ep=totalPages;}
+    else{
+        var side=Math.floor(maxButtons/2);
+        if(currentPage<=side+1){sp=1;ep=maxButtons;}
+        else if(currentPage>=totalPages-side){sp=totalPages-maxButtons+1;ep=totalPages;}
+        else{sp=currentPage-side;ep=currentPage+side;}
+    }
+    if(sp>1){html+='<button class="nav-btn page-btn" data-page="1">1</button>';if(sp>2)html+='<span class="page-ellipsis">...</span>';}
+    for(var i=sp;i<=ep;i++)html+='<button class="nav-btn page-btn'+(i===currentPage?' active-page':'')+'" data-page="'+i+'">'+i+'</button>';
+    if(ep<totalPages){if(ep<totalPages-1)html+='<span class="page-ellipsis">...</span>';html+='<button class="nav-btn page-btn" data-page="'+totalPages+'">'+totalPages+'</button>';}
+    html+='<button class="nav-btn" id="pageNext"'+(currentPage===totalPages?' disabled style="opacity:0.5;cursor:not-allowed;"':'')+'>▶</button>';
+    container.innerHTML=html;
+    container.querySelectorAll('.page-btn').forEach(function(btn){btn.addEventListener('click',function(){var page=parseInt(this.dataset.page);if(page!==currentPage){currentPage=page;renderHistory();}});});
+    var pb=document.getElementById('pagePrev'),nb=document.getElementById('pageNext');
+    if(pb)pb.addEventListener('click',function(){if(currentPage>1){currentPage--;renderHistory();}});
+    if(nb)nb.addEventListener('click',function(){if(currentPage<totalPages){currentPage++;renderHistory();}});
+}
+
+function searchByExpect(num){
+    if(!num||!fullHistoryList.length)return;
+    var idx=fullHistoryList.findIndex(function(item){return item.expect===num;});
+    if(idx!==-1){
+        currentPage=Math.floor(idx/PAGE_SIZE)+1;renderHistory();
+        setTimeout(function(){
+            var rows=document.getElementById('historyContent').querySelectorAll('.history-row');
+            var lidx=idx%PAGE_SIZE;
+            if(rows[lidx]){rows[lidx].scrollIntoView({behavior:'smooth',block:'center'});rows[lidx].style.background='#fff3cd';setTimeout(function(){rows[lidx].style.background='';},2000);}
+        },100);
+    }else{alert('未找到该期号');}
+}
+
+async function loadHistory(){
+    document.getElementById('historyContent').innerHTML='<div class="loading-box">加载历史中...</div>';
+    try{
+        var resp=await fetch(HISTORY_API);
+        if(!resp.ok) throw new Error('API不可用');
+        var json=await resp.json();
+        processHistoryData(json);
+    }catch(e){
+        console.log('API失败，加载本地缓存...');
+        fetch('2026.json')
+        .then(function(r){return r.json();})
+        .then(processHistoryData)
+        .catch(function(){
+            document.getElementById('historyContent').innerHTML='<div class="loading-box">历史数据暂不可用</div>';
+        });
+    }
+}
+
+function processHistoryData(json){
+    var arr=json?.data||(Array.isArray(json)?json:null);
+    if(arr&&arr.length){
+        var map=new Map();
+        for(var i=0;i<arr.length;i++){if(!map.has(arr[i].expect))map.set(arr[i].expect,arr[i]);}
+        fullHistoryList=Array.from(map.values()).sort(function(a,b){return parseInt(b.expect)-parseInt(a.expect);});
+        currentPage=1;
+        renderHistory();
+    }else{
+        document.getElementById('historyContent').innerHTML='<div class="loading-box">暂无历史数据</div>';
+    }
+}
+
+function refreshAI(){
+    var oldScript=document.querySelector('script[src*="ensemble_data.js"]');
+    if(oldScript)oldScript.remove();
+    delete window.ensembleData;
+    document.getElementById('predictResultArea').innerHTML='<div class="predict-card"><div class="predict-title">刷新预测中...</div></div>';
+    var script=document.createElement('script');
+    script.src='ensemble_data.js?t='+Date.now();
+    script.onload=function(){if(typeof ensembleData!=='undefined'){loadLive();}};
+    script.onerror=function(){document.getElementById('predictResultArea').innerHTML='<div class="predict-card"><div class="predict-title">预测数据加载失败</div></div>';};
+    document.head.appendChild(script);
+}
+
+var countdownTarget=null,countdownTimer=null;
+function calculateNextDrawTime(){
+    var now=new Date();
+    countdownTarget=new Date(now);
+    countdownTarget.setHours(21,30,0,0);
+    if(now.getHours()>21||(now.getHours()===21&&now.getMinutes()>=30))countdownTarget.setDate(countdownTarget.getDate()+1);
+}
+function updateCountdownDisplay(){
+    var now=new Date();
+    if(!countdownTarget||countdownTarget<=now)calculateNextDrawTime();
+    var diff=countdownTarget-now;
+    if(diff<=0){calculateNextDrawTime();diff=countdownTarget-now;}
+    var ts=Math.floor(diff/1000),h=Math.floor(ts/3600),m=Math.floor((ts%3600)/60),s=ts%60;
+    var str=String(h).padStart(2,'0')+String(m).padStart(2,'0')+String(s).padStart(2,'0');
+    var items=document.getElementById('countdownTimer').querySelectorAll('.countdown-item');
+    for(var i=0;i<items.length&&i<str.length;i++)items[i].textContent=str[i];
+}
+function startCountdown(){
+    calculateNextDrawTime();
+    updateCountdownDisplay();
+    if(countdownTimer)clearInterval(countdownTimer);
+    countdownTimer=setInterval(updateCountdownDisplay,1000);
+}
+
+window.addEventListener('scroll',function(){
+    var btn=document.getElementById('backToTop');
+    if(window.scrollY>300)btn.classList.add('show');else btn.classList.remove('show');
+});
+</script>
+</body>
+</html>
