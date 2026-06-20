@@ -77,6 +77,6 @@ var ensembleData = {
       "蛇"
     ]
   },
-  "dynamicRate9": 0,
-  "dynamicRate6": 0
+  "dynamicRate9": 100.0,
+  "dynamicRate6": 100.0
 };
