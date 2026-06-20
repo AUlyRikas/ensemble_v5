@@ -25,6 +25,15 @@ jobs:
           python -m pip install --upgrade pip
           pip install requests
 
+      - name: 调试文件结构
+        run: |
+          echo "=== 当前目录 ==="
+          pwd
+          echo "=== 根目录文件列表 ==="
+          ls -la
+          echo "=== 查找 ensemble_v5.py ==="
+          find . -name "ensemble_v5.py"
+
       - name: 运行 V5.1 预测
         run: python ensemble_v5.py --output --auto-update
 
