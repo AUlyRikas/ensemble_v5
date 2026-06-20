@@ -467,12 +467,19 @@ def calc_dynamic_rate(window=50):
 
 def save_js(result):
     js_path = os.path.join(BASE_DIR, "ensemble_data.js")
+    # 从开奖数据中提取波色和生肖
+    latest_data = load_all_data(auto_update=False)
+    if latest_data:
+        latest_full = latest_data[-1] if latest_data else {}
+    else:
+        latest_full = {}
+    
     js_data = {
         "time": result.get("latest_time", ""),
         "issue": result.get("latest_issue", ""),
         "code": result.get("latest_code", ""),
-        "zodiac": "",
-        "wave": "",
+        "zodiac": latest_full.get("zodiac", ""),
+        "wave": latest_full.get("wave", ""),
         "teSx": result.get("latest_te_sx", ""),
         "teWei": result.get("latest_te_wei", ""),
         "nextIssue": result.get("next_qihao", ""),
