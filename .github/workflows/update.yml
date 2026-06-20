@@ -26,9 +26,7 @@ jobs:
           pip install requests
 
       - name: 运行 V5.1 预测
-        run: |
-          cd ${{ github.workspace }}
-          python ensemble_v5.py --output --auto-update
+        run: python ensemble_v5.py --output --auto-update
 
       - name: 提交更新后的 ensemble_data.js
         run: |
