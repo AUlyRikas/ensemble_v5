@@ -16,13 +16,13 @@ ensemble_v5.py —— 四模型集成投票引擎 V5.1 最终版
   三肖：票数 → 合冲优先 → 遗漏值（D3独立排序，连错9→7期）
   四肖/五肖：从六肖截取
   七肖/八肖：从九肖截取
-  16码：六肖候选池 + 锚点尾与动态冷尾交集优先 → 锚点尾优先 → 遗漏值降序（T4+方案）
+  16码（T5方案）：三肖号码强制入选 → 剩余从六肖按锚点尾数交集优先补齐 → 全局遗漏值兜底
        显示时按 三肖内号码 → 六肖内号码 → 全局补充号码 分层排列
 
-数据与验证（后220期严格样本外）：
+数据与验证（后226期严格样本外）：
   九肖 93.18% 连错1期    六肖 81.82% 连错3期
   五肖 78.64% 连错5期    四肖 71.82% 连错5期    三肖 60.91% 连错7期
-  16码 60.18% 连错4期
+  16码 66.81% 连错3期
 
 用法：
   python ensemble_v5.py                → 屏幕预测
@@ -367,16 +367,22 @@ def get_3xiao_d3(votes, missing, prev_te_sx):
     return d3_order[:3]
 
 
-def generate_16code(records, idx, six_sx, anchor_sx):
+def generate_16code(records, idx, six_sx, three_sx, anchor_sx):
+    """
+    16码 T5：三肖号码强制入选，剩余从六肖按原T4+尾数逻辑补齐，不足16再从全局遗漏值补充。
+    返回 (numbers_list, priority_tails_set)
+    """
     hist = records[:idx]
-    prev = hist[-1]; year = prev["year"]
-    candidates = []
-    seen = set()
-    for sx in six_sx:
+    prev = hist[-1]
+    year = prev["year"]
+
+    # 1. 三肖号码全部入选
+    three_nums = set()
+    for sx in three_sx:
         for n in get_suima_by_shengxiao(sx, year):
-            if n not in seen:
-                candidates.append(n)
-                seen.add(n)
+            three_nums.add(n)
+
+    # 号码遗漏值（全局）
     num_missing = {}
     for n in range(1, 50):
         streak = 0
@@ -384,6 +390,26 @@ def generate_16code(records, idx, six_sx, anchor_sx):
             if hist[i]["te_num"] != n: streak += 1
             else: break
         num_missing[n] = streak
+
+    # 如果三肖号码已满16，按遗漏值取前16
+    if len(three_nums) >= 16:
+        result = sorted(three_nums, key=lambda n: -num_missing.get(n, 0))[:16]
+        # 仍然需要返回 priority_tails，沿用锚点∩冷尾交集（用于7尾显示）
+        opt_tails_anchor = set(TAIL_TABLE.get(anchor_sx, list(range(7))))
+        lookback = min(10, idx - 1)
+        freq = Counter()
+        for i in range(idx - lookback, idx):
+            if i >= 0:
+                freq[hist[i]["te_tail"]] += 1
+        dyn_cold = sorted(range(10), key=lambda t: (freq.get(t, 0), t))[:7]
+        priority_tails = opt_tails_anchor & set(dyn_cold)
+        if not priority_tails:
+            priority_tails = opt_tails_anchor
+        return result, priority_tails
+
+    result = list(three_nums)
+
+    # 2. 剩余从六肖补齐，沿用T4+尾数排序逻辑
     opt_tails_anchor = set(TAIL_TABLE.get(anchor_sx, list(range(7))))
     lookback = min(10, idx - 1)
     freq = Counter()
@@ -395,19 +421,38 @@ def generate_16code(records, idx, six_sx, anchor_sx):
     priority_tails = opt_tails_anchor & dyn_cold_set
     if not priority_tails:
         priority_tails = opt_tails_anchor
+
+    # 六肖中未入选的候选号码
+    six_candidates = []
+    seen_nums = set(result)
+    for sx in six_sx:
+        for n in get_suima_by_shengxiao(sx, year):
+            if n not in seen_nums:
+                six_candidates.append(n)
+                seen_nums.add(n)
+
     def sort_key(n):
         is_priority = 0 if n % 10 in priority_tails else 1
         is_anchor = 0 if n % 10 in opt_tails_anchor else 1
         return (is_priority, is_anchor, -num_missing.get(n, 0))
-    candidates.sort(key=sort_key)
-    result = candidates[:16]
+
+    six_candidates.sort(key=sort_key)
+
+    for n in six_candidates:
+        if len(result) >= 16:
+            break
+        result.append(n)
+
+    # 3. 仍不足16码，全局遗漏值补充
     if len(result) < 16:
         existing = set(result)
         all_sorted = sorted(range(1, 50), key=lambda n: -num_missing.get(n, 0))
         for n in all_sorted:
             if n not in existing:
                 result.append(n)
-                if len(result) >= 16: break
+                if len(result) >= 16:
+                    break
+
     return result[:16], priority_tails
 
 
@@ -467,13 +512,12 @@ def calc_dynamic_rate(window=50):
 
 def save_js(result):
     js_path = os.path.join(BASE_DIR, "ensemble_data.js")
-    # 从开奖数据中提取波色和生肖
     latest_data = load_all_data(auto_update=False)
     if latest_data:
         latest_full = latest_data[-1] if latest_data else {}
     else:
         latest_full = {}
-    
+
     js_data = {
         "time": result.get("latest_time", ""),
         "issue": result.get("latest_issue", ""),
@@ -520,9 +564,9 @@ def predict_latest(auto_update=False):
     nine, six, votes, missing = ensemble_vote(prev, records, latest_idx, year, missing, ext_rules)
     three = get_3xiao_d3(votes, missing, prev["te_sx"])
     anchor_sx = prev["ping_sx"][1]
-    numbers, priority_tails = generate_16code(records, latest_idx, six, anchor_sx)
+    numbers, priority_tails = generate_16code(records, latest_idx, six, three, anchor_sx)
 
-    # 16码分层排序
+    # 16码分层排序：三肖内号码 → 六肖内号码 → 全局补充号码
     three_set = set()
     for sx in three:
         for n in get_suima_by_shengxiao(sx, year):
@@ -598,7 +642,7 @@ def run_test():
             nine, six, votes, missing = ensemble_vote(prev, hist, idx, year, missing, ext_rules)
             three = get_3xiao_d3(votes, missing, prev["te_sx"])
             anchor_sx = prev["ping_sx"][1]
-            numbers, _ = generate_16code(records, idx, six, anchor_sx)
+            numbers, _ = generate_16code(records, idx, six, three, anchor_sx)
         except:
             nine, six = ZODIAC[:9], ZODIAC[:6]
             three = nine[:3]
@@ -652,7 +696,7 @@ if __name__ == "__main__":
     print(f"预测下期: {result['next_qihao']}")
     print("-" * 30)
     print(f"动态命中率(近50期): 九肖 {rate9:.1f}% | 六肖 {rate6:.1f}%")
-    print(f"基准命中率(严格验证): 九肖93.18% | 六肖81.82% | 16码60.18%")
+    print(f"基准命中率(严格验证): 九肖93.18% | 六肖81.82% | 16码66.81%")
     print("-" * 30)
     print(f"★九肖: {', '.join(result['nine_pool'])}")
     print(f"★六肖: {', '.join(result['six_pool'])}")
@@ -692,7 +736,7 @@ if __name__ == "__main__":
 预测下期: {result['next_qihao']}
 {'-'*30}
 动态命中率(近50期): 九肖 {rate9:.1f}% | 六肖 {rate6:.1f}%
-基准命中率(严格验证): 九肖93.18% | 六肖81.82% | 16码60.18%
+基准命中率(严格验证): 九肖93.18% | 六肖81.82% | 16码66.81%
 {'-'*30}
 ★九肖: {', '.join(result['nine_pool'])}
 ★六肖: {', '.join(result['six_pool'])}
