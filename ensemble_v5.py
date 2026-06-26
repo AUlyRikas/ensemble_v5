@@ -18,12 +18,13 @@ ensemble_v5.py —— 四模型集成投票引擎 V5.1 最终版
   七肖/八肖：从九肖截取
   16码（T5方案）：三肖号码强制入选 → 剩余从六肖按锚点尾数交集优先补齐 → 全局遗漏值兜底
        显示时按 三肖内号码 → 六肖内号码 → 全局补充号码 分层排列
+  最优7尾：锚点尾按近10期热度降序排列（频率高的在前）
 
 数据与验证（后226期严格样本外）：
   九肖 93.18% 连错1期    六肖 81.82% 连错3期
   五肖 78.64% 连错5期    四肖 71.82% 连错5期    三肖 60.91% 连错7期
   16码 66.81% 连错3期
-
+  7尾(热尾优先_w10)	前3:39.21% 连错9期 | 前5:56.39% 连错4期 | 前7命中率: 79.30% 连错4期
 用法：
   python ensemble_v5.py                → 屏幕预测
   python ensemble_v5.py --output       → 预测 + 保存记录 + 生成JS + 校验上期
@@ -580,13 +581,14 @@ def predict_latest(auto_update=False):
     tier3 = [n for n in numbers if n not in six_set]
     numbers = tier1 + tier2 + tier3
 
-    # 最优7尾
+    # 最优7尾：锚点尾按近10期热度降序排列（频率高的在前）
     anchor_order = TAIL_TABLE.get(anchor_sx, list(range(7)))
-    opt_tails_display = [t for t in anchor_order if t in priority_tails]
-    for t in anchor_order:
-        if t not in opt_tails_display:
-            opt_tails_display.append(t)
-    opt_tails_display = opt_tails_display[:7]
+    lookback = min(10, latest_idx - 1)
+    freq = Counter()
+    for i in range(latest_idx - lookback, latest_idx):
+        if i >= 0:
+            freq[records[i]["te_tail"]] += 1
+    opt_tails_display = sorted(anchor_order, key=lambda t: (-freq.get(t, 0), anchor_order.index(t)))[:7]
 
     latest_full = data[-1] if data else {}
     next_qihao = ""
