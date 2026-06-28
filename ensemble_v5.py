@@ -512,7 +512,7 @@ def calc_dynamic_rate(window=50):
     return hits9 / total * 100 if total else 0, hits6 / total * 100 if total else 0
 
 def save_js(result):
-    js_path = os.path.join(BASE_DIR, "ensemble_data.js")
+    js_path = os.path.join(BASE_DIR, "ensemble_data_v5.js")
     latest_data = load_all_data(auto_update=False)
     if latest_data:
         latest_full = latest_data[-1] if latest_data else {}
