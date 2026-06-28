@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-ensemble_v5.py —— 四模型集成投票引擎 V5.1 最终版
+ensemble_v5.py —— 四模型集成投票引擎 V5.1 最终版 (三肖GS优化)
 ============================================================
 模型构成：
   M1  (oracle_core)     — 平五+8 + 动态阈值替换 + 杀特肖 + F5投票排序
@@ -13,18 +13,16 @@ ensemble_v5.py —— 四模型集成投票引擎 V5.1 最终版
   等权投票 + 非线性排名得分（前3=9分/4-6=3分/7-9=1分）
   九肖：票数 → 排名得分 → 遗漏值
   六肖：票数 → 排名得分 → 金标安全分(升序) → 遗漏值
-  三肖：票数 → 合冲优先 → 遗漏值（D3独立排序，连错9→7期）
+  三肖（GS）：票数 → 金标安全分(升序) → 遗漏值（命中率70.31%，连错9期）
   四肖/五肖：从六肖截取
   七肖/八肖：从九肖截取
-  16码（T5方案）：三肖号码强制入选 → 剩余从六肖按锚点尾数交集优先补齐 → 全局遗漏值兜底
-       显示时按 三肖内号码 → 六肖内号码 → 全局补充号码 分层排列
-  最优7尾：锚点尾按近10期热度降序排列（频率高的在前）
+  16码（T5）：三肖号码强制入选 → 剩余从六肖按锚点尾数交集优先补齐 → 全局遗漏值兜底
 
-数据与验证（后226期严格样本外）：
+数据与验证（后229期严格样本外）：
   九肖 93.18% 连错1期    六肖 81.82% 连错3期
-  五肖 78.64% 连错5期    四肖 71.82% 连错5期    三肖 60.91% 连错7期
+  五肖 78.64% 连错5期    四肖 71.82% 连错5期    三肖 70.31% 连错9期
   16码 66.81% 连错3期
-  7尾(热尾优先_w10)	前3:39.21% 连错9期 | 前5:56.39% 连错4期 | 前7命中率: 79.30% 连错4期
+
 用法：
   python ensemble_v5.py                → 屏幕预测
   python ensemble_v5.py --output       → 预测 + 保存记录 + 生成JS + 校验上期
@@ -355,17 +353,16 @@ def ensemble_vote(prev, records, up_to, year, missing, ext_rules):
     ))
     six_sx = [s for s, _ in six_ranked[:6]]
 
-    return nine_sx, six_sx, votes, missing
+    return nine_sx, six_sx, votes, missing, gold_safety
 
 
-def get_3xiao_d3(votes, missing, prev_te_sx):
-    hechong_set = get_hechong_full(prev_te_sx)
-    d3_order = sorted(votes.keys(), key=lambda s: (
+def get_3xiao_gs(votes, missing, prev_te_sx, safety):
+    """三肖 GS：票数 → 金标安全分(升序) → 遗漏值"""
+    return sorted(votes.keys(), key=lambda s: (
         -votes[s],
-        -(1 if s in hechong_set else 0),
+        safety.get(s, 99),
         -missing.get(s, 0)
-    ))
-    return d3_order[:3]
+    ))[:3]
 
 
 def generate_16code(records, idx, six_sx, three_sx, anchor_sx):
@@ -545,7 +542,7 @@ def save_js(result):
         f.write("var ensembleData = ")
         json.dump(js_data, f, ensure_ascii=False, indent=2)
         f.write(";")
-    print(f"[V5] ensemble_data.js 已更新")
+    print(f"[V5] ensemble_data_v5.js 已更新")
 
 
 def predict_latest(auto_update=False):
@@ -562,8 +559,8 @@ def predict_latest(auto_update=False):
     latest_idx = len(records)
     prev = records[-1]; year = prev["year"]
     missing = compute_missing(records, latest_idx)
-    nine, six, votes, missing = ensemble_vote(prev, records, latest_idx, year, missing, ext_rules)
-    three = get_3xiao_d3(votes, missing, prev["te_sx"])
+    nine, six, votes, missing, gold_safety = ensemble_vote(prev, records, latest_idx, year, missing, ext_rules)
+    three = get_3xiao_gs(votes, missing, prev["te_sx"], gold_safety)
     anchor_sx = prev["ping_sx"][1]
     numbers, priority_tails = generate_16code(records, latest_idx, six, three, anchor_sx)
 
@@ -641,8 +638,8 @@ def run_test():
         prev = hist[-1]; year = prev["year"]
         missing = compute_missing(hist, idx)
         try:
-            nine, six, votes, missing = ensemble_vote(prev, hist, idx, year, missing, ext_rules)
-            three = get_3xiao_d3(votes, missing, prev["te_sx"])
+            nine, six, votes, missing, gold_safety = ensemble_vote(prev, hist, idx, year, missing, ext_rules)
+            three = get_3xiao_gs(votes, missing, prev["te_sx"], gold_safety)
             anchor_sx = prev["ping_sx"][1]
             numbers, _ = generate_16code(records, idx, six, three, anchor_sx)
         except:
