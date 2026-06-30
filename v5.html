@@ -23,10 +23,11 @@
         .open_code_zone_left{flex:1}.open_code_zone_left-title{text-align:center;margin-bottom:10px}
         .open_code_zone_left-content{display:flex;flex-wrap:wrap;justify-content:center;gap:5px}
         .open_code_zone_left-item{display:flex;flex-direction:column;align-items:center;gap:3px}
-        .open_code_zone_left-item-number{width:58px;height:58px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:bold;color:#fff;box-shadow:0 3px 8px rgba(0,0,0,0.3)}
+        .open_code_zone_left-item-number{width:58px;height:58px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:bold;color:#fff;box-shadow:0 3px 8px rgba(0,0,0,0.3),inset 0 -2px 0 rgba(0,0,0,0.2),inset 0 2px 3px rgba(255,255,255,0.3);position:relative}
+        .open_code_zone_left-item-number::after{content:"";position:absolute;top:8%;left:18%;width:22%;height:22%;background:radial-gradient(circle,rgba(255,255,255,0.7) 0%,rgba(255,255,255,0) 80%);border-radius:50%}
         .ball-red{background:radial-gradient(circle at 30% 30%,#ef4444,#b91c1c)}.ball-blue{background:radial-gradient(circle at 30% 30%,#3b82f6,#1d4ed8)}.ball-green{background:radial-gradient(circle at 30% 30%,#22c55e,#15803d)}
-        .open_code_zone_left-item-plus{font-size:26px;font-weight:bold;color:#a855f7;padding:0 4px;display:flex;align-items:center;height:46px}
-        .open_code_zone_left-item-zodiac{font-size:16px;color:#000;padding:2px 8px;border-radius:10px;font-weight:600}
+        .open_code_zone_left-item-plus{font-size:30px;font-weight:bold;color:#a855f7;padding:0 4px;display:flex;align-items:center;height:46px}
+        .open_code_zone_left-item-zodiac{font-size:14px;color:#000;padding:2px 8px;border-radius:10px;font-weight:600}
         .open_code_zone_right{flex:0 0 auto;text-align:center;min-width:130px;padding:12px 15px}
         .mred{color:#d2101e;font:bold 20px Tahoma}
         .countdown{display:flex;align-items:center;justify-content:center;gap:0;margin-top:5px}.countdown-item{width:30px;height:38px;font-size:22px;font-weight:bold;display:flex;align-items:center;justify-content:center;font-family:'Courier New',monospace;color:#000}.countdown-split{font-size:22px;color:#1a3d96;margin:0 3px;font-weight:bold}
@@ -39,11 +40,91 @@
         .predict-tag.red-tag{color:#d90011;font-size:18px}
         .predict-tag.green-tag{color:#F81919;font-size:28px;font-weight:normal}
 
+        /* 预测16码小球 */
+        .predict-ball{
+            width:28px; height:28px; border-radius:50%;
+            display:inline-flex; align-items:center; justify-content:center;
+            font-size:14px; font-weight:bold; color:#fff;
+            box-shadow:0 2px 5px rgba(0,0,0,0.3), inset 0 -1px 0 rgba(0,0,0,0.2), inset 0 1px 2px rgba(255,255,255,0.3);
+            position:relative; margin:1px;
+        }
+        .predict-ball::after{
+            content:""; position:absolute; top:6%; left:16%; width:20%; height:20%;
+            background:radial-gradient(circle,rgba(255,255,255,0.6) 0%,rgba(255,255,255,0) 80%);
+            border-radius:50%;
+        }
+        .predict-ball.ball-red{background:radial-gradient(circle at 30% 30%,#ef4444,#b91c1c)}
+        .predict-ball.ball-blue{background:radial-gradient(circle at 30% 30%,#3b82f6,#1d4ed8)}
+        .predict-ball.ball-green{background:radial-gradient(circle at 30% 30%,#22c55e,#15803d)}
+
         .find-div{padding:15px 12px;margin:6px 10px}.find-div-title{font-weight:bolder;font-size:16px;margin-left:20px;color:#1a3d96}.find-input{display:flex;align-items:center;gap:10px;margin-top:10px}.expect_value{padding:8px 12px;border:2px solid #1a3d96;border-radius:20px;font-size:14px;width:150px}
         .hisWrapper{margin:15px 12px;border:1px solid #e0e0e0;border-radius:12px;overflow:hidden}
-        .hisSubject{display:flex;color:#1a3d96;font-weight:bold;font-size:14px;border-bottom:1px solid #e0e0e0;background:#f9fafb}.hisSubject>div{padding:10px 5px;text-align:center}.hisIssue{flex:0 0 18%}.hisTime{flex:0 0 26%}.hisCode{flex:0 0 40%}.hisPlay{flex:0 0 16%}
-        .history-row{display:flex;border-bottom:1px solid #e8ecf4;align-items:center}.history-row>div{padding:8px 4px;text-align:center;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:2px}.history-row .hisIssue-cell{flex:0 0 18%;font-weight:bold;color:#1a3d96;font-size:15px}.history-row .hisTime-cell{flex:0 0 26%;font-size:11px;color:#666}.history-row .hisCode-cell{flex:0 0 40%}.history-row .hisPlay-cell{flex:0 0 16%;color:#1a3d96;font-size:12px;cursor:pointer;font-weight:600}
-        .history-ball{width:34px;height:34px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:15px;font-weight:bold;color:#fff;box-shadow:0 2px 5px rgba(0,0,0,0.3)}.history-plus{font-size:18px;font-weight:bold;color:#a855f7;margin:0 1px}.history-zodiac-tag{font-size:12px;color:#000;padding:2px 5px;border-radius:8px;font-weight:600}
+        
+        /* 表头通用 */
+        .hisSubject{display:flex;color:#1a3d96;font-weight:bold;font-size:14px;border-bottom:1px solid #e0e0e0;background:#f9fafb}
+        .hisSubject>div{padding:10px 5px;text-align:center}
+        
+        /* 桌面表头 */
+        .hisSubject-desktop .hisIssue{flex:0 0 15%}
+        .hisSubject-desktop .hisTime{flex:0 0 22%}
+        .hisSubject-desktop .hisCode{flex:1}
+        
+        /* 手机表头（默认隐藏） */
+        .hisSubject-mobile{display:none}
+        .hisSubject-mobile .hisIssueTime{flex:0 0 25%}
+        .hisSubject-mobile .hisCode{flex:1}
+        
+        /* 历史行容器 */
+        .history-row{border-bottom:1px solid #e8ecf4;display:flex;align-items:center}
+        
+        /* 信息列容器 */
+        .hisInfo-cell{
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            gap:4px;
+            padding:8px 4px;
+        }
+        .hisInfo-cell .hisIssue-text{font-weight:bold;color:#1a3d96;font-size:15px}
+        .hisInfo-cell .hisTime-text{font-size:11px;color:#666}
+        
+        /* 号码列 */
+        .hisCode-cell{
+            padding:8px 4px;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            flex-wrap:wrap;
+            gap:2px;
+        }
+        
+        /* 桌面布局：信息列水平排列，占37%宽 */
+        @media screen and (min-width:481px){
+            .hisInfo-cell{
+                flex:0 0 37%;
+                flex-direction:row;
+                justify-content:space-around;
+            }
+            .hisCode-cell{flex:1}
+        }
+        
+        /* 手机布局：信息列垂直排列，占22%宽 */
+        @media screen and (max-width:480px){
+            .hisInfo-cell{
+                flex:0 0 22%;
+                flex-direction:column;
+                gap:2px;
+                justify-content:center;
+            }
+            .hisCode-cell{flex:1}
+        }
+        
+        /* 历史通用号码球样式 */
+        .history-ball{width:36px;height:36px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:16px;font-weight:bold;color:#fff;box-shadow:0 2px 5px rgba(0,0,0,0.3),inset 0 -1px 0 rgba(0,0,0,0.2),inset 0 1px 2px rgba(255,255,255,0.3);position:relative}
+        .history-ball::after{content:"";position:absolute;top:6%;left:16%;width:20%;height:20%;background:radial-gradient(circle,rgba(255,255,255,0.6) 0%,rgba(255,255,255,0) 80%);border-radius:50%}
+        .history-plus{font-size:20px;font-weight:bold;color:#a855f7;margin:0 1px}
+        .history-zodiac-tag{font-size:12px;color:#000;padding:2px 5px;border-radius:8px;font-weight:600}
+        
         .loading-box{text-align:center;padding:30px;color:#1a3d96;font-size:14px}
         .nav-btn{padding:6px 14px;background:transparent;color:#000;border:none;border-radius:20px;font-size:13px;cursor:pointer;font-weight:bold;transition:all 0.3s}
         .nav-btn:hover{background:#00a0ea;color:#fff}
@@ -51,7 +132,33 @@
         #lock{text-align:center;padding:60px 20px;background:#fff;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center}#lock h2{margin-bottom:20px;color:#1a3d96;font-size:22px}#lock input{padding:12px;font-size:16px;border:2px solid #1a3d96;border-radius:8px;width:200px;text-align:center}#lock button{padding:12px 30px;font-size:16px;background:#d90011;color:#ffd700;border:none;border-radius:30px;cursor:pointer;margin-top:10px;font-weight:bold}
         footer{text-align:center;padding:18px;color:#999;font-size:11px;border-top:1px solid #e0e0e0;margin-top:24px}
         .back-to-top{position:fixed;right:20px;bottom:30px;width:44px;height:44px;border:2px solid #1a3d96;border-radius:50%;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:999;box-shadow:0 2px 8px rgba(0,0,0,0.15);transition:all 0.3s;opacity:0;visibility:hidden}.back-to-top.show{opacity:1;visibility:visible}.arrow-up{display:inline-block;width:12px;height:12px;border-left:2px solid #1a3d96;border-top:2px solid #1a3d96;transform:rotate(45deg);margin-top:4px}
-        @media screen and (max-width:480px){.open_code_zone{flex-direction:column}.open_code_zone_right{flex-direction:row;justify-content:space-around;width:100%}.open_code_zone_left-item-number{width:38px;height:38px;font-size:18px}.history-ball{width:26px;height:26px;font-size:11px}.history-zodiac-tag{font-size:8px}.history-plus{font-size:14px}.lotteryMain{font-size:28px}.predict-title{font-size:20px}.predict-subtitle{font-size:15px}.predict-tag.green-tag{font-size:22px}}
+        
+        @media screen and (max-width:480px){
+            .open_code_zone{flex-direction:column}
+            .open_code_zone_right{flex-direction:row;justify-content:space-around;width:100%}
+            .open_code_zone_left-item-number{width:42px;height:42px;font-size:22px}
+            .open_code_zone_left-item-plus{font-size:24px;height:42px}
+            .open_code_zone_left-item-zodiac{font-size:12px}
+            
+            /* 切换到手机表头 */
+            .hisSubject-desktop{display:none}
+            .hisSubject-mobile{display:flex}
+            
+            /* 手机端球微调 */
+            .history-ball{width:34px;height:34px;font-size:15px}
+            .history-zodiac-tag{font-size:10px}
+            .history-plus{font-size:18px}
+            .predict-ball{width:24px;height:24px;font-size:12px}
+            
+            .lotteryMain{font-size:28px}
+            .predict-title{font-size:20px}
+            .predict-subtitle{font-size:15px}
+            .predict-tag.green-tag{font-size:22px}
+            .pagination-container{gap:4px}
+            .pagination-container .nav-btn{padding:5px 8px;font-size:11px;min-width:28px}
+            .back-to-top{right:10px;bottom:20px;width:38px;height:38px}
+            .arrow-up{width:10px;height:10px}
+        }
     </style>
 </head>
 <body>
@@ -112,7 +219,16 @@
         </div>
     </div>
     <div class="hisWrapper">
-        <div class="hisSubject"><div class="hisIssue">期號</div><div class="hisTime">開獎時間</div><div class="hisCode">中獎號碼</div><div class="hisPlay">開獎回放</div></div>
+        <!-- 表头双模式自动切换 -->
+        <div class="hisSubject hisSubject-desktop">
+            <div class="hisIssue">期號</div>
+            <div class="hisTime">開獎時間</div>
+            <div class="hisCode">中獎號碼</div>
+        </div>
+        <div class="hisSubject hisSubject-mobile">
+            <div class="hisIssueTime">期號/時間</div>
+            <div class="hisCode">中獎號碼</div>
+        </div>
         <div id="historyContent"><div class="loading-box">加载历史中...</div></div>
     </div>
     <div class="pagination-container" id="paginationContainer" style="display:none;"></div>
@@ -121,7 +237,6 @@
     <footer>版權所有 不得轉載 @澳門六合彩 AI预测 · V5.1</footer>
 </div>
 
-<!-- 加载 ensemble_data.js -->
 <script>document.write('<script src="ensemble_data_v5.js?v='+Date.now()+'"><\/script>');</script>
 
 <script>
@@ -177,7 +292,6 @@ function loadLive(){
     }
     document.getElementById('liveBallContainer').innerHTML=html;
 
-    // 构建预测卡片
     var killSet = p.killZodiacs || [];
     var pool3 = (p.pools && p.pools[3]) ? p.pools[3] : (p.three || []);
     var pool4 = (p.pools && p.pools[4]) ? p.pools[4] : (p.four || []);
@@ -191,7 +305,6 @@ function loadLive(){
         '<div class="predict-title">★ V5.1 预测 · '+p.nextIssue+'</div>'+
         '<div class="predict-subtitle">基于 '+p.issue+' | 开奖 '+p.code+' | 特肖 '+p.teSx+'(尾'+p.teWei+')</div>';
     
-    // 动态命中率
     if (dynamicRate9 > 0 || dynamicRate6 > 0) {
         predictHtml += '<div style="text-align:center;font-size:12px;color:#888;margin-bottom:10px;">'+
             '动态命中率(近50期): 九肖 ' + dynamicRate9.toFixed(1) + '% | 六肖 ' + dynamicRate6.toFixed(1) + '%'+
@@ -200,12 +313,10 @@ function loadLive(){
     predictHtml += '<div style="text-align:center;font-size:12px;color:#888;margin-bottom:10px;">'+
         '基准命中率: 九肖93.18% | 六肖81.82% | 16码60.18%</div>';
     
-    // 六肖（大字突出）
     predictHtml += '<div class="predict-tags" style="justify-content:center;margin:10px 0;">'+
         (p.sixPool||[]).map(function(s){return '<span class="predict-tag green-tag">'+s+'</span>';}).join(' ')+
         '</div>';
     
-    // 五肖、四肖、三肖
     if (pool5.length > 0) {
         predictHtml += '<div style="text-align:center;font-size:16px;font-weight:normal;color:#FF6600;margin:6px 0;">'+
             '★五肖: ' + pool5.join(' . ') + '</div>';
@@ -219,19 +330,21 @@ function loadLive(){
             '★三肖: ' + pool3.join(' . ') + '</div>';
     }
     
-    // 16码（按分层排序显示）
+    // 16码改为号码球
     if (numbers.length > 0) {
-        predictHtml += '<div style="text-align:center;font-size:15px;font-weight:bold;color:#8A2BE2;margin:8px 0;">'+
-            '★16码: ' + numbers.join(' . ') + '</div>';
+        var ballsHtml = numbers.map(function(num){
+            var n = parseInt(num);
+            var cls = getBallClass(n);
+            return '<span class="predict-ball '+cls+'">'+num+'</span>';
+        }).join('');
+        predictHtml += '<div style="text-align:center;margin:8px 0;display:flex;flex-wrap:wrap;justify-content:center;gap:2px;">'+ballsHtml+'</div>';
     }
     
-    // 最优7尾
     if (optTails.length > 0) {
         predictHtml += '<div style="text-align:center;font-size:14px;font-weight:normal;color:#8A2BE2;margin:4px 0;">'+
             '★最优7尾: ' + optTails.join(' ') + '</div>';
     }
     
-    // 杀肖 + 九肖池
     predictHtml += '<div class="predict-tags" style="justify-content:center;">'+
         (killSet.length?'<span class="predict-tag red-tag">杀肖: '+killSet.join('、')+'</span>':'')+
         ' '+
@@ -274,7 +387,18 @@ function renderHistory(){
     var rows='';
     for(var i=0;i<display.length;i++){
         var item=display[i];
-        rows+='<div class="history-row"><div class="hisIssue-cell">'+(item.expect||'-')+'</div><div class="hisTime-cell">'+(item.openTime?item.openTime.split(' ')[0]:'-')+'</div><div class="hisCode-cell">'+buildHistoryBalls(item.openCode,item.zodiac)+'</div><div class="hisPlay-cell">查看</div></div>';
+        var issue = item.expect||'-';
+        var time = item.openTime?item.openTime.split(' ')[0]:'-';
+        var ballsHtml = buildHistoryBalls(item.openCode,item.zodiac);
+        
+        // 单一结构，自适应桌面/手机
+        rows+='<div class="history-row">'+
+            '<div class="hisInfo-cell">'+
+                '<span class="hisIssue-text">'+issue+'</span>'+
+                '<span class="hisTime-text">'+time+'</span>'+
+            '</div>'+
+            '<div class="hisCode-cell">'+ballsHtml+'</div>'+
+        '</div>';
     }
     document.getElementById('historyContent').innerHTML=rows;
     renderPagination();
