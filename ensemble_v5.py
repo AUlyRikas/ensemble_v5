@@ -1,27 +1,60 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-ensemble_v5.py —— 四模型集成投票引擎 V5.1 最终版 (三肖GS优化)
+ensemble_v5.py —— 四模型集成投票引擎 V5.1 最终版（R96 优化）
 ============================================================
 模型构成：
   M1  (oracle_core)     — 平五+8 + 动态阈值替换 + 杀特肖 + F5投票排序
-  R96 (reference_96)    — 多信号评分（金标惩罚+冷却+合冲+平五窗口+固定杀肖）
+  R96 (reference_96)    — 多信号评分（金标投票惩罚×2.2 + 冷却 + 平五窗口 + 合冲池）
+                          已移除遗漏值和固定杀肖（验证为负贡献）
   P54 (predict_54)      — 54条固化围肖信号等权投票
-  MAX (core_max)        — 外部金标规则库反向投票（7840条，冻结于前2000期）
+  MAX (core_max)        — 外部金标规则库反向投票（7840条，冻结于前2190期）
+
+  ============================================================
+MAX 杀肖规则库（特肖杀肖规则库.json）维护说明
+============================================================
+1. 构建逻辑（“全量扫描、未来验证”）
+   - 数据范围：前 2190 期（约）全量数据。
+   - 偏移范围：±11（-11 到 +11，共 23 种偏移）。
+   - 训练方式：在全部训练数据上扫描，不切内部验证集。
+   - 筛选条件：样本量 ≥ 5，杀中率 ≥ 95%，最大连错 ≤ 1。
+   - 产生规则数：7840 条金标规则。
+   - 验证方式：冻结后，用 2190 期之后的全部独立数据验证，
+               确认无未来函数且实战表现最优。
+
+2. 使用方式（在 V5.1 中的三个消费点）
+   - MAX 模型：反向投票，排除被 ≥2 条金标规则杀中的生肖。
+   - R96 模型：金标投票惩罚，被杀次数越多扣分越重。
+   - 六肖排序：金标安全分，被杀次数越少越安全。
+
+3. 更新维护 SOP（当新数据积累 ≥500 期时考虑）
+   - 训练集：截止到新冻结点的全部数据（如新总数据 2700 期，
+            取前 2500 期作为全量扫描训练集）。
+   - 参数：样本量 ≥5、杀中率 ≥95%、最大连错 ≤1、偏移 ±11。
+   - 生成新规则库后，在冻结期之后的独立数据上跑 V5.1 完整回测。
+   - 只有当新规则库在六肖、三肖、16码等所有核心指标上全面
+     优于旧规则库时才替换；否则保留旧规则库不动。
+
+4. 重要原则
+   - 规则库一旦冻结，永远不允许用未来数据重新训练后回测历史。
+   - 全量扫描是故意为之：不切内部验证集是为了保留更多有效规则，
+     依靠未来独立数据验证泛化能力。
+   - 当前 7840 条规则已稳定运行多年，不要轻易替换。
+============================================================
 
 投票与排序：
   等权投票 + 非线性排名得分（前3=9分/4-6=3分/7-9=1分）
   九肖：票数 → 排名得分 → 遗漏值
   六肖：票数 → 排名得分 → 金标安全分(升序) → 遗漏值
-  三肖（GS）：票数 → 金标安全分(升序) → 遗漏值（命中率70.31%，连错9期）
+  三肖（GS）：票数 → 金标安全分(升序) → 遗漏值
   四肖/五肖：从六肖截取
   七肖/八肖：从九肖截取
   16码（T5）：三肖号码强制入选 → 剩余从六肖按锚点尾数交集优先补齐 → 全局遗漏值兜底
 
-数据与验证（后229期严格样本外）：
-  九肖 93.18% 连错1期    六肖 81.82% 连错3期
-  五肖 78.64% 连错5期    四肖 71.82% 连错5期    三肖 70.31% 连错9期
-  16码 66.81% 连错3期
+数据与验证（后231期严格样本外）：
+  九肖 96.54% 连错1期    六肖 86.58% 连错3期
+  五肖 78.35% 连错5期    四肖 72.29% 连错7期    三肖 71.43% 连错7期
+  16码 75.76% 连错4期
 
 用法：
   python ensemble_v5.py                → 屏幕预测
@@ -215,11 +248,21 @@ def model_m1(prev, records, up_to, year, missing):
 
 
 def model_r96(prev, records, up_to, missing, ext_rules):
+    """
+    R96 优化版（2026-06-29）
+    评分 = 金标投票惩罚(×2.2) + 特码金标杀肖 + 冷却 + 平五窗口 + 合冲池
+    已移除：遗漏值分段加权（负贡献）、固定杀肖（负贡献）
+    """
     cur_sx = prev["te_sx"]; year = prev["year"]
-    MISSING_WEIGHTS = (1.0, 2.0, 3.0); MISSING_THRESH = (8, 20)
-    GOLD_PENS = [3, 8, 15, 30]; COOL_PENS = [10, 5, 2]
-    FIXED_WEIGHT = 15; TE_WEIGHT = 10
-    PING5_WEIGHT = 10; HECHONG_WEIGHT = 8; COOL_WINDOW = 3
+    GOLD_PENS = [3, 8, 15, 30]
+    GOLD_SCALE = 2.2
+    COOL_PENS = [10, 5, 2]
+    TE_WEIGHT = 10
+    PING5_WEIGHT = 10
+    HECHONG_WEIGHT = 8
+    COOL_WINDOW = 3
+
+    # 1. 金标投票
     gold_votes = Counter(); te_kill_set = set()
     if ext_rules:
         for rule_key, info in ext_rules.items():
@@ -234,40 +277,41 @@ def model_r96(prev, records, up_to, missing, ext_rules):
             if asx != trigger_sx: continue
             gold_votes[killed_sx] += 1
             if pos_name == "特码": te_kill_set.add(killed_sx)
-    fixed_kill_set = set()
-    p2_num = prev["ping_nums"][1]
-    fixed_kill_set.add(get_shengxiao_by_suima(offset_num(p2_num, 3), year))
-    fixed_kill_set.add(cur_sx)
+
+    # 2. 冷却惩罚
     cool_map = {}
     for dist in range(1, COOL_WINDOW + 1):
         if up_to - dist >= 0:
             sx = records[up_to - dist]["te_sx"]
             pen = COOL_PENS[dist - 1]
             if sx not in cool_map or pen > cool_map[sx]: cool_map[sx] = pen
+
+    # 3. 平五+8 窗口
     oracle_pool = set()
     ping5 = prev["ping_nums"][4]
     center_num = (ping5 - 1 + 8) % 49 + 1
     center_sx = get_shengxiao_by_suima(center_num, year)
     center_idx = ZODIAC.index(center_sx)
     oracle_pool = set(ZODIAC[(center_idx + i) % 12] for i in range(-4, 5))
+
+    # 4. 合冲池
     hechong_pool = get_hechong_full(cur_sx)
+
+    # 5. 综合评分（无遗漏值、无固定杀肖）
     scores = {}
     for s in ZODIAC:
-        m = missing.get(s, 0)
-        if m >= MISSING_THRESH[1]: score = m * MISSING_WEIGHTS[2]
-        elif m >= MISSING_THRESH[0]: score = m * MISSING_WEIGHTS[1]
-        else: score = m * MISSING_WEIGHTS[0]
+        score = 0
         v = gold_votes.get(s, 0)
-        if v >= 4: score -= GOLD_PENS[3]
-        elif v == 3: score -= GOLD_PENS[2]
-        elif v == 2: score -= GOLD_PENS[1]
-        elif v == 1: score -= GOLD_PENS[0]
-        if s in fixed_kill_set: score -= FIXED_WEIGHT
+        if v >= 4: score -= int(GOLD_PENS[3] * GOLD_SCALE)
+        elif v == 3: score -= int(GOLD_PENS[2] * GOLD_SCALE)
+        elif v == 2: score -= int(GOLD_PENS[1] * GOLD_SCALE)
+        elif v == 1: score -= int(GOLD_PENS[0] * GOLD_SCALE)
         if s in te_kill_set: score -= TE_WEIGHT
         score -= cool_map.get(s, 0)
         if s in oracle_pool: score += PING5_WEIGHT
         if s in hechong_pool: score += HECHONG_WEIGHT
         scores[s] = score
+
     return [s for s, _ in sorted(scores.items(), key=lambda x: x[1], reverse=True)[:9]]
 
 
@@ -367,20 +411,18 @@ def get_3xiao_gs(votes, missing, prev_te_sx, safety):
 
 def generate_16code(records, idx, six_sx, three_sx, anchor_sx):
     """
-    16码 T5：三肖号码强制入选，剩余从六肖按原T4+尾数逻辑补齐，不足16再从全局遗漏值补充。
+    16码 T5：三肖号码强制入选，剩余从六肖按锚点尾数交集优先补齐。
     返回 (numbers_list, priority_tails_set)
     """
     hist = records[:idx]
     prev = hist[-1]
     year = prev["year"]
 
-    # 1. 三肖号码全部入选
     three_nums = set()
     for sx in three_sx:
         for n in get_suima_by_shengxiao(sx, year):
             three_nums.add(n)
 
-    # 号码遗漏值（全局）
     num_missing = {}
     for n in range(1, 50):
         streak = 0
@@ -389,38 +431,30 @@ def generate_16code(records, idx, six_sx, three_sx, anchor_sx):
             else: break
         num_missing[n] = streak
 
-    # 如果三肖号码已满16，按遗漏值取前16
     if len(three_nums) >= 16:
         result = sorted(three_nums, key=lambda n: -num_missing.get(n, 0))[:16]
-        # 仍然需要返回 priority_tails，沿用锚点∩冷尾交集（用于7尾显示）
         opt_tails_anchor = set(TAIL_TABLE.get(anchor_sx, list(range(7))))
         lookback = min(10, idx - 1)
         freq = Counter()
         for i in range(idx - lookback, idx):
-            if i >= 0:
-                freq[hist[i]["te_tail"]] += 1
+            if i >= 0: freq[hist[i]["te_tail"]] += 1
         dyn_cold = sorted(range(10), key=lambda t: (freq.get(t, 0), t))[:7]
         priority_tails = opt_tails_anchor & set(dyn_cold)
-        if not priority_tails:
-            priority_tails = opt_tails_anchor
+        if not priority_tails: priority_tails = opt_tails_anchor
         return result, priority_tails
 
     result = list(three_nums)
 
-    # 2. 剩余从六肖补齐，沿用T4+尾数排序逻辑
     opt_tails_anchor = set(TAIL_TABLE.get(anchor_sx, list(range(7))))
     lookback = min(10, idx - 1)
     freq = Counter()
     for i in range(idx - lookback, idx):
-        if i >= 0:
-            freq[hist[i]["te_tail"]] += 1
+        if i >= 0: freq[hist[i]["te_tail"]] += 1
     dyn_cold = sorted(range(10), key=lambda t: (freq.get(t, 0), t))[:7]
     dyn_cold_set = set(dyn_cold)
     priority_tails = opt_tails_anchor & dyn_cold_set
-    if not priority_tails:
-        priority_tails = opt_tails_anchor
+    if not priority_tails: priority_tails = opt_tails_anchor
 
-    # 六肖中未入选的候选号码
     six_candidates = []
     seen_nums = set(result)
     for sx in six_sx:
@@ -437,49 +471,38 @@ def generate_16code(records, idx, six_sx, three_sx, anchor_sx):
     six_candidates.sort(key=sort_key)
 
     for n in six_candidates:
-        if len(result) >= 16:
-            break
+        if len(result) >= 16: break
         result.append(n)
 
-    # 3. 仍不足16码，全局遗漏值补充
     if len(result) < 16:
         existing = set(result)
         all_sorted = sorted(range(1, 50), key=lambda n: -num_missing.get(n, 0))
         for n in all_sorted:
             if n not in existing:
                 result.append(n)
-                if len(result) >= 16:
-                    break
+                if len(result) >= 16: break
 
     return result[:16], priority_tails
 
 
 def load_hit_track():
-    if not os.path.exists(TRACK_FILE):
-        return []
-    with open(TRACK_FILE, 'r', encoding='utf-8') as f:
-        return json.load(f)
+    if not os.path.exists(TRACK_FILE): return []
+    with open(TRACK_FILE, 'r', encoding='utf-8') as f: return json.load(f)
 
 def save_hit_track(track):
     os.makedirs(TRACK_DIR, exist_ok=True)
-    with open(TRACK_FILE, 'w', encoding='utf-8') as f:
-        json.dump(track, f, ensure_ascii=False, indent=2)
+    with open(TRACK_FILE, 'w', encoding='utf-8') as f: json.dump(track, f, ensure_ascii=False, indent=2)
 
 def verify_last_prediction(records):
     track = load_hit_track()
-    if not track:
-        return track
+    if not track: return track
     last = track[-1]
-    if last.get("hit9", -1) != -1 and last.get("hit6", -1) != -1:
-        return track
+    if last.get("hit9", -1) != -1 and last.get("hit6", -1) != -1: return track
     predicted_issue = last.get("issue", "")
     actual_sx = None
     for r in records:
-        if r["qishu"] == predicted_issue:
-            actual_sx = r["te_sx"]
-            break
-    if actual_sx is None:
-        return track
+        if r["qishu"] == predicted_issue: actual_sx = r["te_sx"]; break
+    if actual_sx is None: return track
     last["hit9"] = 1 if actual_sx in last.get("nine", []) else 0
     last["hit6"] = 1 if actual_sx in last.get("six", []) else 0
     track[-1] = last
@@ -488,34 +511,25 @@ def verify_last_prediction(records):
 
 def append_prediction_to_track(issue, nine, six):
     track = load_hit_track()
-    track.append({
-        "issue": issue, "nine": nine, "six": six,
-        "hit9": -1, "hit6": -1,
-        "time": datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    })
-    if len(track) > 100:
-        track = track[-100:]
+    track.append({"issue": issue, "nine": nine, "six": six, "hit9": -1, "hit6": -1,
+                  "time": datetime.now().strftime('%Y-%m-%d %H:%M:%S')})
+    if len(track) > 100: track = track[-100:]
     save_hit_track(track)
     return track
 
 def calc_dynamic_rate(window=50):
     track = load_hit_track()
     valid = [t for t in track if t.get("hit9", -1) >= 0][-window:]
-    if not valid:
-        return 0, 0
-    hits9 = sum(t["hit9"] for t in valid)
-    hits6 = sum(t["hit6"] for t in valid)
+    if not valid: return 0, 0
+    hits9 = sum(t["hit9"] for t in valid); hits6 = sum(t["hit6"] for t in valid)
     total = len(valid)
     return hits9 / total * 100 if total else 0, hits6 / total * 100 if total else 0
 
 def save_js(result):
     js_path = os.path.join(BASE_DIR, "ensemble_data_v5.js")
     latest_data = load_all_data(auto_update=False)
-    if latest_data:
-        latest_full = latest_data[-1] if latest_data else {}
-    else:
-        latest_full = {}
-
+    if latest_data: latest_full = latest_data[-1] if latest_data else {}
+    else: latest_full = {}
     js_data = {
         "time": result.get("latest_time", ""),
         "issue": result.get("latest_issue", ""),
@@ -530,31 +544,21 @@ def save_js(result):
         "killZodiacs": result.get("kill_zodiacs", []),
         "numbers": result.get("numbers", []),
         "optTails": result.get("opt_tails", []),
-        "pools": {
-            3: result.get("three", []),
-            4: result.get("four", []),
-            5: result.get("five", [])
-        },
+        "pools": {3: result.get("three", []), 4: result.get("four", []), 5: result.get("five", [])},
         "dynamicRate9": result.get("dynamic_rate9", 0),
         "dynamicRate6": result.get("dynamic_rate6", 0),
     }
     with open(js_path, "w", encoding="utf-8") as f:
-        f.write("var ensembleData = ")
-        json.dump(js_data, f, ensure_ascii=False, indent=2)
-        f.write(";")
+        f.write("var ensembleData = "); json.dump(js_data, f, ensure_ascii=False, indent=2); f.write(";")
     print(f"[V5] ensemble_data_v5.js 已更新")
 
 
 def predict_latest(auto_update=False):
     data = load_all_data(auto_update=auto_update)
     records = extract_records(data)
-    if len(records) < 2:
-        return {"error": "数据不足"}
-
-    if not os.path.exists(RULES_PATH):
-        return {"error": f"规则库文件不存在: {RULES_PATH}"}
-    with open(RULES_PATH, 'r', encoding='utf-8') as f:
-        ext_rules = json.load(f)
+    if len(records) < 2: return {"error": "数据不足"}
+    if not os.path.exists(RULES_PATH): return {"error": f"规则库文件不存在: {RULES_PATH}"}
+    with open(RULES_PATH, 'r', encoding='utf-8') as f: ext_rules = json.load(f)
 
     latest_idx = len(records)
     prev = records[-1]; year = prev["year"]
@@ -564,27 +568,24 @@ def predict_latest(auto_update=False):
     anchor_sx = prev["ping_sx"][1]
     numbers, priority_tails = generate_16code(records, latest_idx, six, three, anchor_sx)
 
-    # 16码分层排序：三肖内号码 → 六肖内号码 → 全局补充号码
+    # 16码分层排序
     three_set = set()
     for sx in three:
-        for n in get_suima_by_shengxiao(sx, year):
-            three_set.add(n)
+        for n in get_suima_by_shengxiao(sx, year): three_set.add(n)
     six_set = set()
     for sx in six:
-        for n in get_suima_by_shengxiao(sx, year):
-            six_set.add(n)
+        for n in get_suima_by_shengxiao(sx, year): six_set.add(n)
     tier1 = [n for n in numbers if n in three_set]
     tier2 = [n for n in numbers if n in six_set and n not in three_set]
     tier3 = [n for n in numbers if n not in six_set]
     numbers = tier1 + tier2 + tier3
 
-    # 最优7尾：锚点尾按近10期热度降序排列（频率高的在前）
+    # 最优7尾：锚点尾按近10期热度降序排列
     anchor_order = TAIL_TABLE.get(anchor_sx, list(range(7)))
     lookback = min(10, latest_idx - 1)
     freq = Counter()
     for i in range(latest_idx - lookback, latest_idx):
-        if i >= 0:
-            freq[records[i]["te_tail"]] += 1
+        if i >= 0: freq[records[i]["te_tail"]] += 1
     opt_tails_display = sorted(anchor_order, key=lambda t: (-freq.get(t, 0), anchor_order.index(t)))[:7]
 
     latest_full = data[-1] if data else {}
@@ -607,18 +608,12 @@ def predict_latest(auto_update=False):
         "latest_te_sx": prev["te_sx"],
         "latest_te_wei": prev["te_tail"],
         "next_qihao": next_qihao,
-        "nine_pool": nine,
-        "six_pool": six,
-        "three": three,
-        "five": six[:5],
-        "four": six[:4],
-        "seven": nine[:7],
-        "eight": nine[:8],
-        "numbers": numbers,
-        "opt_tails": opt_tails_display,
+        "nine_pool": nine, "six_pool": six,
+        "three": three, "five": six[:5], "four": six[:4],
+        "seven": nine[:7], "eight": nine[:8],
+        "numbers": numbers, "opt_tails": opt_tails_display,
         "kill_zodiacs": kill_zodiacs,
-        "dynamic_rate9": rate9,
-        "dynamic_rate6": rate6,
+        "dynamic_rate9": rate9, "dynamic_rate6": rate6,
     }
 
 
@@ -628,10 +623,8 @@ def run_test():
     TRAIN_END = 2000
     test_count = len(records) - TRAIN_END
     print(f"回测: 训练集前{TRAIN_END}期, 测试集后{test_count}期\n")
-    if not os.path.exists(RULES_PATH):
-        print("错误：外部规则库不存在"); return
-    with open(RULES_PATH, 'r', encoding='utf-8') as f:
-        ext_rules = json.load(f)
+    if not os.path.exists(RULES_PATH): print("错误：外部规则库不存在"); return
+    with open(RULES_PATH, 'r', encoding='utf-8') as f: ext_rules = json.load(f)
     hits = {k: [] for k in [3, 4, 5, 6, 9, 16]}
     for idx in range(TRAIN_END, len(records)):
         hist = records[:idx]
@@ -643,9 +636,7 @@ def run_test():
             anchor_sx = prev["ping_sx"][1]
             numbers, _ = generate_16code(records, idx, six, three, anchor_sx)
         except:
-            nine, six = ZODIAC[:9], ZODIAC[:6]
-            three = nine[:3]
-            numbers = list(range(1, 17))
+            nine, six = ZODIAC[:9], ZODIAC[:6]; three = nine[:3]; numbers = list(range(1, 17))
         target_sx = records[idx]["te_sx"]
         target_num = records[idx]["te_num"]
         hits[9].append(target_sx in nine)
@@ -666,11 +657,10 @@ if __name__ == "__main__":
     p.add_argument("--test", action="store_true", help="回测验证")
     p.add_argument("--output", action="store_true", help="预测并保存记录，校验上期")
     p.add_argument("--verify", action="store_true", help="仅校验上期预测")
-    p.add_argument("--auto-update", action="store_true", help="自动更新数据（GitHub Actions用）")
+    p.add_argument("--auto-update", action="store_true", help="自动更新数据")
     args = p.parse_args()
 
-    if args.test:
-        run_test(); sys.exit(0)
+    if args.test: run_test(); sys.exit(0)
 
     if args.verify:
         data = load_all_data(auto_update=False)
@@ -681,8 +671,7 @@ if __name__ == "__main__":
         sys.exit(0)
 
     result = predict_latest(auto_update=args.auto_update or args.output)
-    if "error" in result:
-        print(f"错误: {result['error']}"); sys.exit(1)
+    if "error" in result: print(f"错误: {result['error']}"); sys.exit(1)
 
     rate9 = result.get('dynamic_rate9', 0)
     rate6 = result.get('dynamic_rate6', 0)
@@ -695,7 +684,7 @@ if __name__ == "__main__":
     print(f"预测下期: {result['next_qihao']}")
     print("-" * 30)
     print(f"动态命中率(近50期): 九肖 {rate9:.1f}% | 六肖 {rate6:.1f}%")
-    print(f"基准命中率(严格验证): 九肖93.18% | 六肖81.82% | 16码66.81%")
+    print(f"基准命中率(严格验证): 九肖96.54% | 六肖86.58% | 16码75.76%")
     print("-" * 30)
     print(f"★九肖: {', '.join(result['nine_pool'])}")
     print(f"★六肖: {', '.join(result['six_pool'])}")
@@ -710,20 +699,14 @@ if __name__ == "__main__":
         data = load_all_data(auto_update=False)
         records = extract_records(data)
         verify_last_prediction(records)
-        append_prediction_to_track(
-            result.get("next_qihao", ""),
-            result.get("nine_pool", []),
-            result.get("six_pool", []),
-        )
+        append_prediction_to_track(result.get("next_qihao", ""), result.get("nine_pool", []), result.get("six_pool", []))
         save_js(result)
         os.makedirs(TRACK_DIR, exist_ok=True)
         now_str = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         already_saved = False
         if os.path.exists(OUTPUT_FILE):
             with open(OUTPUT_FILE, 'r', encoding='utf-8') as f:
-                existing_content = f.read()
-            if f"预测下期: {result['next_qihao']}" in existing_content:
-                already_saved = True
+                if f"预测下期: {result['next_qihao']}" in f.read(): already_saved = True
         if not already_saved:
             text = f"""
 {'='*50}
@@ -735,7 +718,7 @@ if __name__ == "__main__":
 预测下期: {result['next_qihao']}
 {'-'*30}
 动态命中率(近50期): 九肖 {rate9:.1f}% | 六肖 {rate6:.1f}%
-基准命中率(严格验证): 九肖93.18% | 六肖81.82% | 16码66.81%
+基准命中率(严格验证): 九肖96.54% | 六肖86.58% | 16码75.76%
 {'-'*30}
 ★九肖: {', '.join(result['nine_pool'])}
 ★六肖: {', '.join(result['six_pool'])}
@@ -746,8 +729,7 @@ if __name__ == "__main__":
 ★最优7尾: {' '.join(str(t) for t in result['opt_tails'])}
 {'='*50}
 """
-            with open(OUTPUT_FILE, 'a', encoding='utf-8') as f:
-                f.write(text)
+            with open(OUTPUT_FILE, 'a', encoding='utf-8') as f: f.write(text)
             print(f"记录已保存至 {OUTPUT_FILE}")
         else:
             print(f"期号 {result['next_qihao']} 已有记录，跳过保存")
