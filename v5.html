@@ -238,7 +238,23 @@
     <footer>版權所有 不得轉載 @澳門六合彩 AI预测 · V5.1</footer>
 </div>
 
-<script>document.write('<script src="ensemble_data_v5.js?v='+Date.now()+'"><\/script>');</script>
+<script>
+(function() {
+    var loaded = false;
+    var timeout = setTimeout(function() {
+        if (!loaded) {
+            var fb = document.createElement('script');
+            fb.src = 'https://raw.githubusercontent.com/AUlyRikas/ensemble_v5/main/ensemble_data_v5.js?v=' + Date.now();
+            fb.onload = function() { loaded = true; };
+            document.head.appendChild(fb);
+        }
+    }, 3000);
+    var pr = document.createElement('script');
+    pr.src = 'ensemble_data_v5.js?v=' + Date.now();
+    pr.onload = function() { loaded = true; clearTimeout(timeout); };
+    document.head.appendChild(pr);
+})();
+</script>
 
 <script>
 function checkPwd(){
@@ -474,12 +490,12 @@ function processHistoryData(json){
 }
 
 function refreshAI(){
-    var oldScript=document.querySelector('script[src*="ensemble_data.js"]');
+    var oldScript=document.querySelector('script[src*="ensemble_data_v5.js"]');
     if(oldScript)oldScript.remove();
     delete window.ensembleData;
     document.getElementById('predictResultArea').innerHTML='<div class="predict-card"><div class="predict-title">刷新预测中...</div></div>';
     var script=document.createElement('script');
-    script.src='ensemble_data.js?t='+Date.now();
+    script.src='ensemble_data_v5.js?t='+Date.now();
     script.onload=function(){if(typeof ensembleData!=='undefined'){loadLive();}};
     script.onerror=function(){document.getElementById('predictResultArea').innerHTML='<div class="predict-card"><div class="predict-title">预测数据加载失败</div></div>';};
     document.head.appendChild(script);
