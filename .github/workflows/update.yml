@@ -2,7 +2,7 @@ name: 每日自动更新预测
 
 on:
   schedule:
-    - cron: '30 15 * * *'
+    - cron: '30 16 * * *'
   workflow_dispatch:
 
 jobs:
