@@ -57,69 +57,37 @@
         .predict-ball.ball-blue{background:radial-gradient(circle at 30% 30%,#3b82f6,#1d4ed8)}
         .predict-ball.ball-green{background:radial-gradient(circle at 30% 30%,#22c55e,#15803d)}
 
+        /* 复制按钮样式 */
+        .copy-btn{display:inline-block;padding:3px 8px;margin-left:6px;background:transparent;color:#1a3d96;border:1px solid #1a3d96;border-radius:10px;font-size:12px;line-height:1.2;cursor:pointer;vertical-align:middle}
+        .copy-btn:hover{background:rgba(26,61,150,0.1)}
+
         .find-div{padding:15px 12px;margin:6px 10px}.find-div-title{font-weight:bolder;font-size:16px;margin-left:20px;color:#1a3d96}.find-input{display:flex;align-items:center;gap:10px;margin-top:10px}.expect_value{padding:8px 12px;border:2px solid #1a3d96;border-radius:20px;font-size:14px;width:150px}
         .hisWrapper{margin:15px 12px;border:1px solid #e0e0e0;border-radius:12px;overflow:hidden}
         
-        /* 表头通用 */
         .hisSubject{display:flex;color:#1a3d96;font-weight:bold;font-size:14px;border-bottom:1px solid #e0e0e0;background:#f9fafb}
         .hisSubject>div{padding:10px 5px;text-align:center}
-        
-        /* 桌面表头 */
         .hisSubject-desktop .hisIssue{flex:0 0 15%}
         .hisSubject-desktop .hisTime{flex:0 0 22%}
         .hisSubject-desktop .hisCode{flex:1}
-        
-        /* 手机表头（默认隐藏） */
         .hisSubject-mobile{display:none}
         .hisSubject-mobile .hisIssueTime{flex:0 0 25%}
         .hisSubject-mobile .hisCode{flex:1}
         
-        /* 历史行容器 */
         .history-row{border-bottom:1px solid #e8ecf4;display:flex;align-items:center}
-        
-        /* 信息列容器 */
-        .hisInfo-cell{
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            gap:4px;
-            padding:8px 4px;
-        }
+        .hisInfo-cell{display:flex;align-items:center;justify-content:center;gap:4px;padding:8px 4px}
         .hisInfo-cell .hisIssue-text{font-weight:bold;color:#1a3d96;font-size:15px}
         .hisInfo-cell .hisTime-text{font-size:11px;color:#666}
+        .hisCode-cell{padding:8px 4px;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:2px}
         
-        /* 号码列 */
-        .hisCode-cell{
-            padding:8px 4px;
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            flex-wrap:wrap;
-            gap:2px;
-        }
-        
-        /* 桌面布局：信息列水平排列，占37%宽 */
         @media screen and (min-width:481px){
-            .hisInfo-cell{
-                flex:0 0 37%;
-                flex-direction:row;
-                justify-content:space-around;
-            }
+            .hisInfo-cell{flex:0 0 37%;flex-direction:row;justify-content:space-around}
             .hisCode-cell{flex:1}
         }
-        
-        /* 手机布局：信息列垂直排列，占22%宽 */
         @media screen and (max-width:480px){
-            .hisInfo-cell{
-                flex:0 0 22%;
-                flex-direction:column;
-                gap:2px;
-                justify-content:center;
-            }
+            .hisInfo-cell{flex:0 0 22%;flex-direction:column;gap:2px;justify-content:center}
             .hisCode-cell{flex:1}
         }
         
-        /* 历史通用号码球样式 */
         .history-ball{width:36px;height:36px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:16px;font-weight:bold;color:#fff;box-shadow:0 2px 5px rgba(0,0,0,0.3),inset 0 -1px 0 rgba(0,0,0,0.2),inset 0 1px 2px rgba(255,255,255,0.3);position:relative}
         .history-ball::after{content:"";position:absolute;top:6%;left:16%;width:20%;height:20%;background:radial-gradient(circle,rgba(255,255,255,0.6) 0%,rgba(255,255,255,0) 80%);border-radius:50%}
         .history-plus{font-size:20px;font-weight:bold;color:#a855f7;margin:0 1px}
@@ -136,21 +104,16 @@
         @media screen and (max-width:480px){
             .open_code_zone{flex-direction:column}
             .open_code_zone_right{flex-direction:row;justify-content:space-around;width:100%}
-            .open_code_zone_left-content{gap:3px}              /* 原来 5px */
-            .open_code_zone_left-item-number{width:38px;height:38px;font-size:22px}  /* 原来 42px */
-            .open_code_zone_left-item-plus{font-size:22px;height:38px}               /* 原来 24px 42px */
+            .open_code_zone_left-content{gap:3px}
+            .open_code_zone_left-item-number{width:38px;height:38px;font-size:22px}
+            .open_code_zone_left-item-plus{font-size:22px;height:38px}
             .open_code_zone_left-item-zodiac{font-size:11px}
-            
-            /* 切换到手机表头 */
             .hisSubject-desktop{display:none}
             .hisSubject-mobile{display:flex}
-            
-            /* 手机端球微调 */
             .history-ball{width:34px;height:34px;font-size:15px}
             .history-zodiac-tag{font-size:10px}
             .history-plus{font-size:18px}
             .predict-ball{width:24px;height:24px;font-size:12px}
-            
             .lotteryMain{font-size:28px}
             .predict-title{font-size:20px}
             .predict-subtitle{font-size:15px}
@@ -159,6 +122,7 @@
             .pagination-container .nav-btn{padding:5px 8px;font-size:11px;min-width:28px}
             .back-to-top{right:10px;bottom:20px;width:38px;height:38px}
             .arrow-up{width:10px;height:10px}
+            .copy-btn{font-size:10px;padding:2px 6px}
         }
     </style>
 </head>
@@ -220,7 +184,6 @@
         </div>
     </div>
     <div class="hisWrapper">
-        <!-- 表头双模式自动切换 -->
         <div class="hisSubject hisSubject-desktop">
             <div class="hisIssue">期號</div>
             <div class="hisTime">開獎時間</div>
@@ -283,6 +246,26 @@ const blueSet=new Set([3,4,9,10,14,15,20,25,26,31,36,37,41,42,47,48]);
 const greenSet=new Set([5,6,11,16,17,21,22,27,28,32,33,38,39,43,44,49]);
 function getBallClass(num){let n=parseInt(num);if(redSet.has(n))return'ball-red';if(blueSet.has(n))return'ball-blue';return'ball-green';}
 
+// 通用复制函数
+function copyText(text, btn) {
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(text).then(function() {
+            btn.textContent = '已复制';
+            setTimeout(function() { btn.textContent = '复制'; }, 1500);
+        });
+    } else {
+        var ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed'; ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        btn.textContent = '已复制';
+        setTimeout(function() { btn.textContent = '复制'; }, 1500);
+    }
+}
+
 function initAll(){loadLive();loadHistory();startCountdown();}
 
 function loadLive(){
@@ -293,7 +276,9 @@ function loadLive(){
     }
     
     document.getElementById('currentExpect').textContent=p.issue;
-    document.getElementById('countdownExpect').textContent=p.issue;
+    // 计算下一期期号（假设期号格式为数字递增，如 "2026188" → "2026189"）
+    var nextIssue = (parseInt(p.issue) + 1).toString();
+    document.getElementById('countdownExpect').textContent = nextIssue;
     
     var codes=p.code.split(','), zodiacs=(p.zodiac||'').split(','), waves=(p.wave||'').split(',');
     var html='';
@@ -317,6 +302,7 @@ function loadLive(){
     var numbers = p.numbers || [];
     var dynamicRate9 = p.dynamicRate9 || 0;
     var dynamicRate6 = p.dynamicRate6 || 0;
+    var sixPool = p.sixPool || [];
     
     var predictHtml = '<div class="predict-card">'+
         '<div class="predict-title">★ V5.1 预测 · '+p.nextIssue+'</div>'+
@@ -330,9 +316,14 @@ function loadLive(){
     predictHtml += '<div style="text-align:center;font-size:12px;color:#888;margin-bottom:10px;">'+
         '基准命中率: 九肖93.18% | 六肖81.82% | 16码60.18%</div>';
     
-    predictHtml += '<div class="predict-tags" style="justify-content:center;margin:10px 0;">'+
-        (p.sixPool||[]).map(function(s){return '<span class="predict-tag green-tag">'+s+'</span>';}).join(' ')+
-        '</div>';
+    // 六肖 + 复制按钮（生肖间空格分隔）
+    if (sixPool.length > 0) {
+        var sixText = sixPool.join(' ');
+        predictHtml += '<div class="predict-tags" style="justify-content:center;margin:10px 0;">'+
+            sixPool.map(function(s){return '<span class="predict-tag green-tag">'+s+'</span>';}).join(' ')+
+            ' <button class="copy-btn" onclick="copyText(\''+sixText+'\',this)">复制</button>'+
+            '</div>';
+    }
     
     if (pool5.length > 0) {
         predictHtml += '<div style="text-align:center;font-size:16px;font-weight:normal;color:#FF6600;margin:6px 0;">'+
@@ -347,14 +338,20 @@ function loadLive(){
             '★三肖: ' + pool3.join(' . ') + '</div>';
     }
     
-    // 16码改为号码球
+    // 16码 + 复制按钮（号码间用“.”分隔）
     if (numbers.length > 0) {
         var ballsHtml = numbers.map(function(num){
             var n = parseInt(num);
             var cls = getBallClass(n);
             return '<span class="predict-ball '+cls+'">'+num+'</span>';
         }).join('');
-        predictHtml += '<div style="text-align:center;margin:8px 0;display:flex;flex-wrap:wrap;justify-content:center;gap:2px;">'+ballsHtml+'</div>';
+        var numbersText = numbers.join('.');
+        predictHtml += '<div style="text-align:center;margin:8px 0;">'+
+            '<div style="display:flex;flex-wrap:wrap;justify-content:center;gap:2px;">'+ballsHtml+'</div>'+
+            '<div style="margin-top:4px;">'+
+                '<button class="copy-btn" onclick="copyText(\''+numbersText+'\',this)">复制</button>'+
+            '</div>'+
+            '</div>';
     }
     
     if (optTails.length > 0) {
@@ -365,7 +362,7 @@ function loadLive(){
     predictHtml += '<div class="predict-tags" style="justify-content:center;">'+
         (killSet.length?'<span class="predict-tag red-tag">杀肖: '+killSet.join('、')+'</span>':'')+
         ' '+
-        (p.ninePool&&p.ninePool.length?'<span class="predict-tag"> '+p.ninePool.join('、')+'</span>':'')+
+        (p.ninePool&&p.ninePool.length?'<span class="predict-tag">'+p.ninePool.join('、')+'</span>':'')+
         '</div>';
     
     predictHtml += '</div>';
@@ -408,7 +405,6 @@ function renderHistory(){
         var time = item.openTime?item.openTime.split(' ')[0]:'-';
         var ballsHtml = buildHistoryBalls(item.openCode,item.zodiac);
         
-        // 单一结构，自适应桌面/手机
         rows+='<div class="history-row">'+
             '<div class="hisInfo-cell">'+
                 '<span class="hisIssue-text">'+issue+'</span>'+
