@@ -37,14 +37,14 @@ jobs:
       - name: 运行 V5.1 预测
         run: python ensemble_v5.py --output --auto-update
 
-      - name: 更新时间戳到 index.html（强制刷新页面缓存）
+      - name: 更新时间戳到 v5.html（强制刷新页面缓存）
         run: |
-          echo "<!-- updated: $(date -u) -->" >> index.html
+          echo "<!-- updated: $(date -u) -->" >> v5.html
 
       - name: 提交更新后的文件
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add ensemble_data_v5.js index.html
+          git add ensemble_data_v5.js v5.html
           git diff --staged --quiet || git commit -m "自动更新预测数据"
           git push
